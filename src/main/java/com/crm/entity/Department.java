@@ -69,5 +69,5 @@ public class Department {
     private LocalDateTime updateTime;
 
     @TableField(exist = false)
-    private List<Department> children=new ArrayList<>();
+    private List<Department> children= new ArrayList<>();
 }
