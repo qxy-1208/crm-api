@@ -4,10 +4,12 @@ import com.crm.common.result.PageResult;
 import com.crm.entity.Customer;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.crm.query.CustomerQuery;
+import com.crm.query.IdQuery;
 import com.crm.vo.CustomerVO;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.net.http.HttpResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -23,4 +25,7 @@ public interface CustomerService extends IService<Customer> {
     //导出
     void exportCustomer(CustomerQuery query, HttpServletResponse response);
     void saveOrUpdate(CustomerVO customerVO);
+    void removeCustomer(List<Integer> ids);
+    void customerToPublicPool(IdQuery idQuery);
+    void publicPoolToPrivate(IdQuery idQuery);
 }
