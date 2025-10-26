@@ -1,7 +1,6 @@
 package com.crm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.crm.common.exception.ServerException;
 import com.crm.common.result.PageResult;
@@ -33,7 +32,8 @@ import java.util.List;
  */
 @Service
 public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> implements CustomerService {
-        @Override
+
+    @Override
         public void removeCustomer(List<Integer> ids) {
             removeByIds(ids);
         }
@@ -58,6 +58,8 @@ public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> i
         customer.setOwnerId(ownerId);
         baseMapper.updateById(customer);
     }
+
+
         @Override
         public PageResult<CustomerVO> getPage(CustomerQuery query) {
             Page<CustomerVO> page = new Page<>(query.getPage(), query.getLimit());

@@ -46,7 +46,7 @@ springdoc:
 knife4j:
   enable: true
   setting:
-    language: zh_cn
+    language: zh-CN
   basic:
     enable: true    #开启密码模式
     username: admin   #用户名
@@ -64,3 +64,15 @@ auth:
     - /swagger-ui/**
     - /doc.html
     - /department/**
+
+
+aliyun:
+  oss:
+    # oss对外服务的访问域名
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    # 访问身份验证中用到用户标识
+    accessKeyId: LTAI5tEz6Bqzxjvr5GWTU2E1
+    # 用户用于加密签名字符串和oss用来验证签名字符串的密钥
+    accessKeySecret: 9OglI3nJETKbsUeOKK1V4V31NpRSp0
+    # oss的存储空间
+    bucketName: qxyqs
