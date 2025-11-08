@@ -1,4 +1,4 @@
-package com.crm.convert;
+package com.crm.converter;
 
 
 import com.alibaba.excel.converters.Converter;
@@ -6,14 +6,14 @@ import com.alibaba.excel.converters.ReadConverterContext;
 import com.alibaba.excel.converters.WriteConverterContext;
 import com.alibaba.excel.enums.CellDataTypeEnum;
 import com.alibaba.excel.metadata.data.WriteCellData;
-import com.crm.enums.FollowUpStatusEnum;
+import com.crm.enums.IsKeyDecisionMakerEnum;
 
 /**
  * @description:
  * @author: ycshang
  * @create: 2025-10-05 15:27
  **/
-public class FollowUpStatusConverter implements Converter<Integer> {
+public class IsKeyDecisionMakerConverter implements Converter<Integer> {
     @Override
     public Class<?> supportJavaTypeKey() {
         return Integer.class;
@@ -27,11 +27,11 @@ public class FollowUpStatusConverter implements Converter<Integer> {
 
     @Override
     public Integer convertToJavaData(ReadConverterContext<?> context) {
-        return FollowUpStatusEnum.getValueByName(context.getReadCellData().getStringValue());
+        return IsKeyDecisionMakerEnum.getValueByName(context.getReadCellData().getStringValue());
     }
 
     @Override
     public WriteCellData<?> convertToExcelData(WriteConverterContext<Integer> context) {
-        return new WriteCellData<>(FollowUpStatusEnum.getNameByValue(context.getValue()));
+        return new WriteCellData<>(IsKeyDecisionMakerEnum.getNameByValue(context.getValue()));
     }
 }
