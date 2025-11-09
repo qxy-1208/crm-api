@@ -9,6 +9,7 @@ import com.crm.entity.Customer;
 import com.crm.entity.SysManager;
 import com.crm.mapper.CustomerMapper;
 import com.crm.query.CustomerQuery;
+import com.crm.query.CustomerTrendQuery;
 import com.crm.query.IdQuery;
 import com.crm.security.user.SecurityUser;
 import com.crm.service.CustomerService;
@@ -21,6 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -32,6 +34,11 @@ import java.util.List;
  */
 @Service
 public class CustomerServiceImpl extends ServiceImpl<CustomerMapper, Customer> implements CustomerService {
+
+    @Override
+    public Map<String, List> getCustomerTrend(CustomerTrendQuery query) {
+        return Map.of();
+    }
 
     @Override
         public void removeCustomer(List<Integer> ids) {
