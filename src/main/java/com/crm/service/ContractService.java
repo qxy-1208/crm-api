@@ -3,7 +3,9 @@ package com.crm.service;
 import com.crm.common.result.PageResult;
 import com.crm.entity.Contract;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.crm.query.ApprovalQuery;
 import com.crm.query.ContractQuery;
+import com.crm.query.IdQuery;
 import com.crm.vo.ContractVO;
 import com.crm.common.exception.ServerException;
 
@@ -19,4 +21,6 @@ public interface ContractService extends IService<Contract> {
     //合同列表
     PageResult<ContractVO> getPage(ContractQuery query);
     void saveOrUpdate(ContractVO contractVO) throws ServerException;
+    void startApproval(IdQuery idQuery);
+    void approvalContract(ApprovalQuery query);
 }

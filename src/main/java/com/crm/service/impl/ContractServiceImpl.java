@@ -6,14 +6,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.crm.common.exception.ServerException;
 import com.crm.common.result.PageResult;
 import com.crm.convert.ContractConvert;
-import com.crm.entity.Contract;
-import com.crm.entity.ContractProduct;
-import com.crm.entity.Customer;
-import com.crm.entity.Product;
+import com.crm.entity.*;
+import com.crm.mapper.ApprovalMapper;
 import com.crm.mapper.ContractMapper;
 import com.crm.mapper.ContractProductMapper;
 import com.crm.mapper.ProductMapper;
+import com.crm.query.ApprovalQuery;
 import com.crm.query.ContractQuery;
+import com.crm.query.IdQuery;
 import com.crm.security.user.SecurityUser;
 import com.crm.service.ContractService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -29,7 +29,6 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static com.crm.utils.NumberUtils.generateContractNumber;
-
 /**
  * <p>
  *  服务实现类
@@ -46,6 +45,45 @@ public class ContractServiceImpl extends ServiceImpl<ContractMapper, Contract> i
     private final ContractProductMapper contractProductMapper;
 
     private final ProductMapper productMapper;
+
+    private final ApprovalMapper approvalMapper;
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void approvalContract(ApprovalQuery query) {
+        Contract contract = baseMapper.selectById(query.getId());
+        if (contract == null) {
+            throw new ServerException("合同不存在");
+        }
+
+        if (contract.getStatus() != 1) {
+            throw new ServerException("合同还未发起审核或已审核，请勿重复提交");
+        }
+        // 添加审核内容，判断审核状态
+        String approvalContent = query.getType() == 0 ? "合同审核通过" : "合同审核未通过";
+        Integer contractStatus = query.getType() == 0 ? 2 : 3;
+        Approval approval = new Approval();
+        approval.setType(0);
+        approval.setStatus(query.getType());
+        approval.setCreaterId(SecurityUser.getManagerId());
+        approval.setContractId(contract.getId());
+        approval.setComment(approvalContent);
+        approvalMapper.insert(approval);
+        contract.setStatus(contractStatus);
+        baseMapper.updateById(contract);
+    }
+    @Override
+    public void startApproval(IdQuery idQuery) {
+        Contract contract = baseMapper.selectById(idQuery.getId());
+        if (contract == null) {
+            throw new ServerException("合同不存在");
+        }
+        if (contract.getStatus() != 0) {
+            throw new ServerException("该合同已审核通过，请勿重复提交");
+        }
+        contract.setStatus(1);
+        baseMapper.updateById(contract);
+    }
 
     @Override
     public PageResult<ContractVO> getPage(ContractQuery query) {

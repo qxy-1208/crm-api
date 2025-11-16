@@ -5,7 +5,9 @@ import com.crm.common.exception.ServerException;
 import com.crm.common.result.PageResult;
 import com.crm.common.result.Result;
 import com.crm.enums.BusinessType;
+import com.crm.query.ApprovalQuery;
 import com.crm.query.ContractQuery;
+import com.crm.query.IdQuery;
 import com.crm.service.ContractService;
 import com.crm.vo.ContractVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,6 +47,22 @@ public class ContractController {
     public Result saveOrUpdate(@RequestBody @Validated ContractVO contractVO) {
         // 因为是运行时异常，可直接调用（如果全局异常处理器会处理的话）
         contractService.saveOrUpdate(contractVO);
+        return Result.ok();
+    }
+
+    @PostMapping("/startApproval")
+    @Operation(summary = "启动合同审批")
+    @Log(title="启动合同审批", businessType = BusinessType.INSERT_OR_UPDATE)
+    public Result startApproval(@RequestBody @Validated IdQuery idQuery) {
+        contractService.startApproval(idQuery);
+        return Result.ok();
+    }
+
+    @PostMapping("/approvalContract")
+    @Operation(summary = "合同审批")
+    @Log(title = "合同审批", businessType = BusinessType.INSERT_OR_UPDATE)
+    public Result approvalContract(@RequestBody @Validated ApprovalQuery query) {
+        contractService.approvalContract(query);
         return Result.ok();
     }
     }

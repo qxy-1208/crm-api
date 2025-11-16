@@ -1,11 +1,11 @@
 package com.crm.controller;
 
 import com.crm.common.aop.Log;
-import com.crm.common.exception.ServerException;
 import com.crm.common.result.PageResult;
 import com.crm.common.result.Result;
 import com.crm.enums.BusinessType;
 import com.crm.query.CustomerQuery;
+import com.crm.query.CustomerTrendQuery;
 import com.crm.query.IdQuery;
 import com.crm.service.CustomerService;
 import com.crm.vo.CustomerVO;
@@ -19,8 +19,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
+import java.rmi.ServerException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -39,7 +40,7 @@ public class CustomerController {
 
     @PostMapping("page")
     @Operation(summary = "客户列表-分页")
-    @Log(title="客户列表-分页", businessType = BusinessType.SELECT)
+    @Log(title = "客户列表-分页", businessType = BusinessType.SELECT)
     public Result<PageResult<CustomerVO>> getPage(@RequestBody CustomerQuery query) {
         return Result.ok(customerService.getPage(query));
     }
@@ -58,25 +59,32 @@ public class CustomerController {
 
     @PostMapping("remove")
     @Operation(summary = "删除客户信息")
-    public Result removeCustomer(@RequestBody List<Integer> ids) {
+    public Result removeCustomer(@RequestBody List<Integer> ids) throws ServerException {
         if (ids.isEmpty()){
             throw new ServerException("请选择要删除的客户信息");
         }
         customerService.removeCustomer(ids);
-        return Result.ok("删除成功");
+        return Result.ok();
     }
-
     @PostMapping("toPublic")
     @Operation(summary = "转为公海客户")
-    public Result customerToPublicPool(@RequestBody @Validated IdQuery idQuery) {
+    public Result customerToPublicPool(@RequestBody @Validated IdQuery idQuery) throws ServerException {
         customerService.customerToPublicPool(idQuery);
         return Result.ok();
     }
 
     @PostMapping("toPrivate")
     @Operation(summary = "领取客户")
-    public Result publicPoolToPrivate(@RequestBody @Validated IdQuery idQuery) {
+    public Result publicPoolToPrivate(@RequestBody @Validated IdQuery idQuery) throws ServerException {
         customerService.publicPoolToPrivate(idQuery);
         return Result.ok();
+    }
+
+
+    @PostMapping("trendData")
+    @Operation(summary = "客户变化趋势数据")
+    @Log(title = "客户变化趋势", businessType = BusinessType.SELECT)
+    public Result<Map<String, List>> getCustomerTrendData(@RequestBody CustomerTrendQuery query) {
+        return Result.ok(customerService.getCustomerTrend(query));
     }
 }
