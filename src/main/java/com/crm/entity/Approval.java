@@ -9,13 +9,12 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.LocalDateTime;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * <p>
- * 
+ * 审批表
  * </p>
  *
  * @author crm
@@ -24,7 +23,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @TableName("t_approval")
-@ApiModel(value = "Approval对象", description = "")
+@ApiModel(value = "Approval对象", description = "审批表实体类")
 public class Approval {
 
     @ApiModelProperty("主键")
@@ -33,7 +32,7 @@ public class Approval {
 
     @ApiModelProperty("0-合同审核，1-回款审核")
     @TableField("type")
-    private Integer type;
+    private Integer type;  // 统一使用Integer类型，删除重复的Byte声明
 
     @ApiModelProperty("创建人id")
     @TableField("creater_id")
@@ -58,7 +57,7 @@ public class Approval {
     @ApiModelProperty("逻辑删除 0-未删除，1-已删除")
     @TableField(value = "delete_flag", fill = FieldFill.INSERT)
     @TableLogic
-    private Integer deleteFlag;
+    private Integer deleteFlag;  // 统一使用Integer类型，删除重复的Byte声明
 
     @ApiModelProperty("创建时间")
     @TableField(value = "create_time", fill = FieldFill.INSERT)

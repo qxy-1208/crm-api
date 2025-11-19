@@ -1,7 +1,6 @@
 package com.crm.controller;
 
 import com.crm.common.aop.Log;
-import com.crm.common.exception.ServerException;
 import com.crm.common.result.PageResult;
 import com.crm.common.result.Result;
 import com.crm.enums.BusinessType;
@@ -9,6 +8,7 @@ import com.crm.query.ApprovalQuery;
 import com.crm.query.ContractQuery;
 import com.crm.query.IdQuery;
 import com.crm.service.ContractService;
+import com.crm.vo.ContractTrendPieVO;
 import com.crm.vo.ContractVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,10 +19,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
- * <p>
- * 前端控制器
- * </p>
+ * 合同管理控制器
+ * 处理合同的增删改查、审批流程及统计分析相关接口
  *
  * @author crm
  * @since 2025-10-12
@@ -34,10 +35,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class ContractController {
     private final ContractService contractService;
 
-
     @PostMapping("page")
     @Operation(summary = "合同列表-分页")
-    @Log(title="合同列表-分页", businessType = BusinessType.SELECT)
+    @Log(title = "合同列表-分页", businessType = BusinessType.SELECT)
     public Result<PageResult<ContractVO>> getPage(@RequestBody @Validated ContractQuery contractQuery) {
         return Result.ok(contractService.getPage(contractQuery));
     }
@@ -45,19 +45,36 @@ public class ContractController {
     @PostMapping("saveOrUpdate")
     @Operation(summary = "新增/修改合同信息")
     public Result saveOrUpdate(@RequestBody @Validated ContractVO contractVO) {
-        // 因为是运行时异常，可直接调用（如果全局异常处理器会处理的话）
         contractService.saveOrUpdate(contractVO);
         return Result.ok();
     }
 
+    /**
+     * 合同状态分布统计（饼图数据）
+     * 返回各状态合同的数量分布
+     */
+    @PostMapping("/statusPieData")
+    @Operation(summary = "合同状态分布统计（饼图）")
+    public Result<List<ContractTrendPieVO>> getContractStatusPieData() {
+        return Result.ok(contractService.getContractStatusPieData());
+    }
+
+    /**
+     * 启动合同审批流程
+     * 触发合同进入审核状态
+     */
     @PostMapping("/startApproval")
     @Operation(summary = "启动合同审批")
-    @Log(title="启动合同审批", businessType = BusinessType.INSERT_OR_UPDATE)
+    @Log(title = "启动合同审批", businessType = BusinessType.INSERT_OR_UPDATE)
     public Result startApproval(@RequestBody @Validated IdQuery idQuery) {
         contractService.startApproval(idQuery);
         return Result.ok();
     }
 
+    /**
+     * 处理合同审批操作
+     * 支持同意/拒绝等审批动作
+     */
     @PostMapping("/approvalContract")
     @Operation(summary = "合同审批")
     @Log(title = "合同审批", businessType = BusinessType.INSERT_OR_UPDATE)
@@ -65,4 +82,4 @@ public class ContractController {
         contractService.approvalContract(query);
         return Result.ok();
     }
-    }
+}

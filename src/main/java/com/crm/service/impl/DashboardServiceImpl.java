@@ -13,6 +13,7 @@ import com.crm.vo.StatisticsData;
 import com.crm.vo.TrendData;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -20,9 +21,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
  * 仪表盘服务实现类
+ * 提供首页统计数据（客户、线索、合同、审核状态等）及趋势分析功能
+ *
+ * @author crm
+ * @since 2025-10-12
  */
 @Service
 @AllArgsConstructor
@@ -32,53 +36,68 @@ public class DashboardServiceImpl implements DashboardService {
     private final LeadMapper leadMapper;
     private final ContractMapper contractMapper;
 
+    /**
+     * 获取仪表盘统计数据（包含当日统计和近7日趋势）
+     */
     @Override
     public DashboardResponse getDashboardStatistics() {
         DashboardResponse response = new DashboardResponse();
-        // 获取统计数据
-        response.setStatistics(calculateStatistics());
-        // 获取趋势数据
-        response.setTrend(getTrendData());
+        response.setStatistics(calculateStatistics()); // 当日统计数据
+        response.setTrend(getTrendData()); // 近7日趋势数据
         return response;
     }
 
     /**
-     * 计算当日统计数据及变化率
+     * 计算当日统计数据及与昨日的变化率
+     * 包含客户、线索、合同、审核状态等核心指标
      */
     private StatisticsData calculateStatistics() {
         StatisticsData data = new StatisticsData();
         LocalDate today = LocalDate.now();
         LocalDate yesterday = today.minusDays(1);
 
-        // 计算新增客户数据
+        // 新增客户统计
         int todayCustomers = countCustomerByDate(today);
         int yesterdayCustomers = countCustomerByDate(yesterday);
         data.setNewCustomerCount(todayCustomers);
         data.setCustomerChange(calculateChangeRate(todayCustomers, yesterdayCustomers));
 
-        // 计算新增线索数据
+        // 新增线索统计
         int todayLeads = countLeadByDate(today);
         int yesterdayLeads = countLeadByDate(yesterday);
         data.setNewLeadCount(todayLeads);
         data.setLeadChange(calculateChangeRate(todayLeads, yesterdayLeads));
 
-        // 计算新增合同数据
+        // 新增合同统计
         int todayContracts = countContractByDate(today);
         int yesterdayContracts = countContractByDate(yesterday);
         data.setNewContractCount(todayContracts);
         data.setContractChange(calculateChangeRate(todayContracts, yesterdayContracts));
 
-        // 计算合同金额数据
+        // 合同金额统计
         BigDecimal todayAmount = sumContractAmountByDate(today);
         BigDecimal yesterdayAmount = sumContractAmountByDate(yesterday);
         data.setContractAmount(todayAmount);
         data.setAmountChange(calculateAmountChangeRate(todayAmount, yesterdayAmount));
+
+        // 今日审核通过合同统计
+        int todayApproved = countApprovedContractsByDate(today);
+        int yesterdayApproved = countApprovedContractsByDate(yesterday);
+        data.setTodayApprovedContractCount(todayApproved);
+        data.setApprovedContractChange(calculateChangeRate(todayApproved, yesterdayApproved));
+
+        // 今日审核拒绝合同统计
+        int todayRejected = countRejectedContractsByDate(today);
+        int yesterdayRejected = countRejectedContractsByDate(yesterday);
+        data.setTodayRejectedContractCount(todayRejected);
+        data.setRejectedContractChange(calculateChangeRate(todayRejected, yesterdayRejected));
 
         return data;
     }
 
     /**
      * 获取近7日趋势数据
+     * 包含客户、线索、合同数量及审核状态趋势
      */
     private TrendData getTrendData() {
         TrendData trendData = new TrendData();
@@ -86,60 +105,74 @@ public class DashboardServiceImpl implements DashboardService {
         List<Integer> customerData = new ArrayList<>();
         List<Integer> leadData = new ArrayList<>();
         List<Integer> contractData = new ArrayList<>();
+        List<Integer> approvedData = new ArrayList<>(); // 审核通过趋势
+        List<Integer> rejectedData = new ArrayList<>(); // 审核拒绝趋势
 
-        // 获取近7日日期
+        // 收集近7天数据
         for (int i = 6; i >= 0; i--) {
             LocalDate date = LocalDate.now().minusDays(i);
-            dates.add(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            String dateStr = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            dates.add(dateStr);
 
-            // 按日期查询各类数据
+            // 基础数据趋势
             customerData.add(countCustomerByDate(date));
             leadData.add(countLeadByDate(date));
             contractData.add(countContractByDate(date));
+
+            // 审核状态趋势
+            approvedData.add(countApprovedContractsByDate(date));
+            rejectedData.add(countRejectedContractsByDate(date));
         }
 
+        // 设置趋势数据
         trendData.setDates(dates);
         trendData.setCustomerData(customerData);
         trendData.setLeadData(leadData);
         trendData.setContractData(contractData);
+        trendData.setApprovedData(approvedData);
+        trendData.setRejectedData(rejectedData);
 
         return trendData;
     }
 
     /**
-     * 按日期统计客户数量
+     * 按日期统计客户数量（过滤已删除数据）
      */
     private int countCustomerByDate(LocalDate date) {
         LambdaQueryWrapper<Customer> wrapper = new LambdaQueryWrapper<>();
-        wrapper.apply("DATE(create_time) = {0}", date);
+        wrapper.apply("DATE(create_time) = {0}", date)
+                .eq(Customer::getDeleteFlag, 0);
         return Math.toIntExact(customerMapper.selectCount(wrapper));
     }
 
     /**
-     * 按日期统计线索数量
+     * 按日期统计线索数量（过滤已删除数据）
      */
     private int countLeadByDate(LocalDate date) {
         LambdaQueryWrapper<Lead> wrapper = new LambdaQueryWrapper<>();
-        wrapper.apply("DATE(create_time) = {0}", date);
+        wrapper.apply("DATE(create_time) = {0}", date)
+                .eq(Lead::getDeleteFlag, 0);
         return Math.toIntExact(leadMapper.selectCount(wrapper));
     }
 
     /**
-     * 按日期统计合同数量
+     * 按日期统计合同数量（过滤已删除数据）
      */
     private int countContractByDate(LocalDate date) {
         LambdaQueryWrapper<Contract> wrapper = new LambdaQueryWrapper<>();
-        wrapper.apply("DATE(create_time) = {0}", date);
+        wrapper.apply("DATE(create_time) = {0}", date)
+                .eq(Contract::getDeleteFlag, 0);
         return Math.toIntExact(contractMapper.selectCount(wrapper));
     }
 
     /**
-     * 按日期统计合同金额
+     * 按日期统计合同总金额（过滤已删除数据）
      */
     private BigDecimal sumContractAmountByDate(LocalDate date) {
         LambdaQueryWrapper<Contract> wrapper = new LambdaQueryWrapper<>();
         wrapper.select(Contract::getAmount)
-                .apply("DATE(create_time) = {0}", date);
+                .apply("DATE(create_time) = {0}", date)
+                .eq(Contract::getDeleteFlag, 0);
 
         List<Contract> contracts = contractMapper.selectList(wrapper);
         BigDecimal total = BigDecimal.ZERO;
@@ -152,7 +185,29 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     /**
-     * 计算数量变化百分比
+     * 按日期统计审核通过的合同数量（状态=2，过滤已删除数据）
+     */
+    private int countApprovedContractsByDate(LocalDate date) {
+        LambdaQueryWrapper<Contract> wrapper = new LambdaQueryWrapper<>();
+        wrapper.apply("DATE(update_time) = {0}", date) // 按状态更新时间统计
+                .eq(Contract::getStatus, 2) // 2=审核通过
+                .eq(Contract::getDeleteFlag, 0);
+        return Math.toIntExact(contractMapper.selectCount(wrapper));
+    }
+
+    /**
+     * 按日期统计审核拒绝的合同数量（状态=3，过滤已删除数据）
+     */
+    private int countRejectedContractsByDate(LocalDate date) {
+        LambdaQueryWrapper<Contract> wrapper = new LambdaQueryWrapper<>();
+        wrapper.apply("DATE(update_time) = {0}", date) // 按状态更新时间统计
+                .eq(Contract::getStatus, 3) // 3=审核未通过
+                .eq(Contract::getDeleteFlag, 0);
+        return Math.toIntExact(contractMapper.selectCount(wrapper));
+    }
+
+    /**
+     * 计算数量变化率（今日较昨日）
      */
     private int calculateChangeRate(int today, int yesterday) {
         if (yesterday == 0) {
@@ -162,7 +217,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     /**
-     * 计算金额变化百分比
+     * 计算金额变化率（今日较昨日）
      */
     private int calculateAmountChangeRate(BigDecimal today, BigDecimal yesterday) {
         if (yesterday.compareTo(BigDecimal.ZERO) == 0) {
